@@ -748,6 +748,7 @@ public class OutputStreamFromHttpResponse implements OutputStreamSource {
             extension.equals(".mat")  || 
             extension.equals(".nc")   ||
              fileType.equals(".odvTxt") ||  //don't force Save As for other .txt, but do for .odvTxt
+             fileType.equals(".SDNodvTxt") ||  //don't force Save As for other .txt, but do for .SDNodvTxt
             extension.equals(".pdf")  ||
             extension.equals(".tif")  ||
             extension.equals(".tsv")  ||

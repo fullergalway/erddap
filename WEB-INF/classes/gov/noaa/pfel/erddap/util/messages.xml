@@ -2237,6 +2237,7 @@ If you want the examples to point to your ERDDAP, the easiest method is:
 <fileHelp_ncml>View the dataset's structure and metadata as a UTF-8 NCML .xml file.</fileHelp_ncml>
 <fileHelpGrid_odvTxt>Download time,lat,lon,otherVariables as an ODV Generic Spreadsheet File (.txt).</fileHelpGrid_odvTxt>
 <fileHelpTable_odvTxt>Download longitude,latitude,time,otherColumns as an ISO-8859-1 ODV Generic Spreadsheet File (.txt).</fileHelpTable_odvTxt>
+<fileHelpTable_SDNodvTxt>Download longitude,latitude,time,otherColumns as an ISO-8859-1 SeaDataNet (SDN) ODV Generic Spreadsheet File (.txt).</fileHelpTable_SDNodvTxt>
 <fileHelp_subset>View an HTML form which uses faceted search to simplify picking subsets of the data.</fileHelp_subset>
 <fileHelp_timeGaps>View a UTF-8 list of gaps in the time values which are larger than the median gap.</fileHelp_timeGaps>
 <fileHelp_tsv>Download a ISO-8859-1 tab-separated text table (line 1: names; line 2: units; ISO 8601 times).</fileHelp_tsv>
@@ -3734,6 +3735,9 @@ Usually, the parameter values in the URL (the parts after '=' signs) must be pro
   <a rel="help" href="https://odv.awi.de/en/documentation/">ODV .txt<img 
     src="&erddapUrl;/images/external.png" alt=" (external link)" 
     title="This link to an external website does not constitute an endorsement."></a>,
+  <a rel="help" href=https://www.seadatanet.org/Standards/Data-Transport-Formats">SeaDataNet ODV .txt<img 
+    src="&erddapUrl;/images/external.png" alt=" (external link)" 
+    title="This link to an external website does not constitute an endorsement."></a>,
   <a rel="help" href="https://en.wikipedia.org/wiki/Comma-separated_values">.csv<img 
     src="&erddapUrl;/images/external.png" alt=" (external link)" 
     title="This link to an external website does not constitute an endorsement."></a>,
@@ -4189,7 +4193,7 @@ make it easier for you to get scientific data.-->
 
 <li>ERDDAP returns data in the common file format of your choice.
   ERDDAP offers all data as .html table, ESRI .asc and .csv, Google Earth .kml, 
-    OPeNDAP binary, .mat, .nc, ODV .txt, .csv, .tsv, .json, and .xhtml.
+    OPeNDAP binary, .mat, .nc, ODV .txt, SeaDataNet ODV .txt, .csv, .tsv, .json, and .xhtml.
     So you no longer have to waste time and effort reformatting data.
   <br>&nbsp;
 
@@ -4693,7 +4697,7 @@ offers several ways to search for interesting datasets.</a></strong>
   ERDDAP translates your request from the OPeNDAP, WMS, or SOS format to the data source's
   request format and converts the response to one of ERDDAP's internal data structures.
   Then ERDDAP reformats the data in the common file format of your choice (for example, as an
-  .html table, ESRI .asc, Google Earth .kml, .mat, .nc, ODV .txt, .csv, .tsv, .json, .xhtml, .png, .pdf)
+  .html table, ESRI .asc, Google Earth .kml, .mat, .nc, ODV .txt, SeaDataNet ODV .txt, .csv, .tsv, .json, .xhtml, .png, .pdf)
   and sends the file to you.
   See the list of 
   <a rel="help" href="&erddapUrl;/griddap/documentation.html#fileType">griddap file types</a>

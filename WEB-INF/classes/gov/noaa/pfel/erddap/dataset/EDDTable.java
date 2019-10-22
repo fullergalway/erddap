@@ -169,7 +169,7 @@ public abstract class EDDTable extends EDD {
         ".nc", ".ncHeader", ".ncCF", ".ncCFHeader", ".ncCFMA", ".ncCFMAHeader", 
 //        ".nc4", ".nc4Header", 
         ".nccsv", ".nccsvMetadata", ".ncoJson",
-        ".odvTxt", ".subset", ".tsv", ".tsvp", ".tsv0", 
+        ".odvTxt", ".SDNodvTxt", ".subset", ".tsv", ".tsvp", ".tsv0", 
         ".wav", ".xhtml"};
     public final static String[] dataFileTypeExtensions = {
         ".asc", ".csv", ".csv", ".csv", ".json", ".das", ".dds", 
@@ -179,7 +179,7 @@ public abstract class EDDTable extends EDD {
         ".nc", ".txt", ".nc", ".txt", ".nc", ".txt", 
 //        ".nc", ".txt",
         ".csv", ".csv", ".json",
-        ".txt", ".html", ".tsv", ".tsv", ".tsv", 
+        ".txt", ".txt", ".html", ".tsv", ".tsv", ".tsv", 
         ".wav", ".xhtml"};
     //These all used to have " (It may take a while. Please be patient.)" at the end.
     public static String[] dataFileTypeDescriptions = {
@@ -217,6 +217,7 @@ public abstract class EDDTable extends EDD {
         EDStatic.fileHelp_nccsvMetadata,
         EDStatic.fileHelp_ncoJson,
         EDStatic.fileHelpTable_odvTxt,
+        EDStatic.fileHelpTable_SDNodvTxt,
         EDStatic.fileHelp_subset,
         EDStatic.fileHelp_tsv,
         EDStatic.fileHelp_tsvp,
@@ -261,6 +262,7 @@ public abstract class EDDTable extends EDD {
         "https://coastwatch.pfeg.noaa.gov/erddap/download/NCCSV.html",
         "http://nco.sourceforge.net/nco.html#json",
         "https://odv.awi.de/en/documentation/", //odv
+        "https://www.seadatanet.org/Standards/Data-Transport-Formats", //SDN odv
         "https://en.wikipedia.org/wiki/Faceted_search",  //subset
         "http://jkorpela.fi/TSV.html",  //tsv
         "http://jkorpela.fi/TSV.html",  //tsv
@@ -322,6 +324,7 @@ public abstract class EDDTable extends EDD {
           "application/x-netcdf", //ncCFMA
         "application/json",     //ncoJson
           "text/plain", //odv
+          "text/plain", // SDN odv
           "text/tab-separated-values",     
         "application/xhtml+xml"};
     /** These are the corresponding tabledap dataFileTypeNames, not the final file extensions. */
@@ -342,6 +345,7 @@ public abstract class EDDTable extends EDD {
           ".ncCFMA", 
         ".ncoJson", 
           ".odvTxt",     
+          ".SDNodvTxt",     
           ".tsvp",
         ".xhtml"};
 
@@ -2919,7 +2923,7 @@ public abstract class EDDTable extends EDD {
             tableWriter = twawm;
         } else if (fileTypeName.equals(".nccsv")) {
             tableWriter = new TableWriterNccsv(this, tNewHistory, outputStreamSource);  
-        } else if (fileTypeName.equals(".odvTxt")) { 
+        } else if (fileTypeName.equals(".odvTxt") || fileTypeName.equals(".SDNodvTxt")) { 
             //ensure there is longitude, latitude, time data in the request (else it is useless in ODV)
             StringArray resultsVariables = new StringArray();
             parseUserDapQuery(userDapQuery, resultsVariables,
@@ -2978,6 +2982,9 @@ public abstract class EDDTable extends EDD {
             else if (fileTypeName.equals(".odvTxt")) 
                 saveAsODV(outputStreamSource, twawm, datasetID, publicSourceUrl(), 
                     infoUrl());
+            else if (fileTypeName.equals(".SDNodvTxt")) 
+                SeaDataNetODVFormatter.saveAsSeaDataNetODV(outputStreamSource, twawm, datasetID, publicSourceUrl(), 
+                    infoUrl(), reallyVerbose);
             return;
         }
 
@@ -7470,6 +7477,8 @@ public abstract class EDDTable extends EDD {
             "  <li>See ODV's <kbd>Help</kbd> menu for more help using ODV.\n" +
             "  </ol>\n" +
             "\n" +
+            //SDN odv
+            SeaDataNetODVFormatter.getGeneralDapHtmlInstructions(tErddapUrl) +
             //opendapLibraries
             "  <p><strong><a class=\"selfLink\" id=\"opendapLibraries\" href=\"#opendapLibraries\" rel=\"bookmark\"\n" +
             "      >OPeNDAP Libraries</a></strong> - Although ERDDAP is an\n" +

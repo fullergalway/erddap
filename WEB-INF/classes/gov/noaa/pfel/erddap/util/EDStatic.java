@@ -180,7 +180,7 @@ public class EDStatic {
      * A request to http.../erddap/version will return just the number (as text).
      * A request to http.../erddap/version_string will return the full string.
      */   
-    public static String erddapVersion = "2.02"; //see comment above
+    public static String erddapVersion = "2.02_SDN"; //see comment above
 
     /** 
      * This is almost always false.  
@@ -971,6 +971,7 @@ public static boolean developmentMode = false;
         fileHelp_ncoJson,
         fileHelpGrid_odvTxt,
         fileHelpTable_odvTxt,
+        fileHelpTable_SDNodvTxt,
         fileHelp_subset,
         fileHelp_timeGaps,
         fileHelp_tsv,
@@ -2315,6 +2316,7 @@ wcsActive = false; //setup.getBoolean(         "wcsActive",                  fal
         fileHelp_ncoJson           = messages.getNotNothingString("fileHelp_ncoJson",           errorInMethod);
         fileHelpGrid_odvTxt        = messages.getNotNothingString("fileHelpGrid_odvTxt",        errorInMethod);
         fileHelpTable_odvTxt       = messages.getNotNothingString("fileHelpTable_odvTxt",       errorInMethod);
+        fileHelpTable_SDNodvTxt    = messages.getNotNothingString("fileHelpTable_SDNodvTxt",    errorInMethod);
         fileHelp_subset            = messages.getNotNothingString("fileHelp_subset",            errorInMethod);
         fileHelp_timeGaps          = messages.getNotNothingString("fileHelp_timeGaps",          errorInMethod);
         fileHelp_tsv               = messages.getNotNothingString("fileHelp_tsv",               errorInMethod);
