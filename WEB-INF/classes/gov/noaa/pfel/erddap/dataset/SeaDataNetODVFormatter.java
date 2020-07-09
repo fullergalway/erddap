@@ -1,5 +1,6 @@
 package gov.noaa.pfel.erddap.dataset;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -133,6 +134,14 @@ public class SeaDataNetODVFormatter {
     	 */
        void append(StringBuilder sb, int row, boolean useCache) throws java.io.IOException;
     }
+     private static ODVAppender getLowerCaseODVAppender(final ODVAppender appender){
+    	 return (sb,i,b) -> {
+    		final StringBuilder sb1 = new StringBuilder();
+			appender.append(sb1, i, b);
+			sb.append(sb1.toString().toLowerCase());
+    	 };
+
+    }
     /**
      * 
      * @param table
@@ -185,7 +194,7 @@ public class SeaDataNetODVFormatter {
 	}
     /**
      * Writes the output in SeaDataNet ODV format. This output method is activated if the administrator
-     * has set the sdn_edmo_code attribute, and the user has requested ODV data format.
+     * has set the SDN_EDMO_CODE attribute, and the user has requested ODV data format.
      * 
      * @param outputStreamSource
      * @param twawm  all the results data, with missingValues stored as destinationMissingValues
@@ -199,16 +208,18 @@ public class SeaDataNetODVFormatter {
          TableWriterAll twawm, final String tDatasetID, final String tPublicSourceUrl, final String tInfoUrl, final boolean reallyVerbose) throws Throwable {
         if (reallyVerbose) String2.log("EDDTable.saveAsSeaDataNetODV");
         long time = System.currentTimeMillis();
-        String sdnEdmoCode = twawm.globalAttributes().getString("sdn_edmo_code");
+        final String sdnEdmoCode = twawm.globalAttributes().getString("SDN_EDMO_CODE");
         if(sdnEdmoCode == null){
             throw new SimpleException(EDStatic.errorInternal +
-                "saveAsSeaDataNetODV error: sdn_edmo_code not in defined as a global attribute.");
+                "saveAsSeaDataNetODV error: SDN_EDMO_CODE not in defined as a global attribute.");
         }
 
-        String timeFormatMask = twawm.globalAttributes().getString("sdn_iso8601_format_mask");
-        if(timeFormatMask == null){
-           timeFormatMask = "YYYY-MM-DDThh:mm:ss.sss";
-        }
+        final String timeFormatMask = twawm.globalAttributes().getString("SDN_ISO8601_format") == null?
+        		"YYYY-MM-DDThh:mm:ss.sss" : twawm.globalAttributes().getString("SDN_ISO8601_format");
+        final String timeP01 = twawm.globalAttributes().getString("SDN_ISO8601_parameter_urn") == null?
+        		"SDN:P01::DTUT8601" : twawm.globalAttributes().getString("SDN_ISO8601_parameter_urn");
+        final String timeP06 = twawm.globalAttributes().getString("SDN_ISO8601_units_urn") == null?
+        		"SDN:P06::TISO" : twawm.globalAttributes().getString("SDN_ISO8601_units_urn");
 
         List<ODVAppender> appenders = new ArrayList<ODVAppender>();
         //make sure there isn't too much data before getting outputStream
@@ -221,7 +232,7 @@ public class SeaDataNetODVFormatter {
         //ensure there is longitude, latitude, time data in the request (else it is useless in ODV)
         if ( lonCol  < 0 || latCol < 0 || timeCol < 0)
             throw new SimpleException(EDStatic.queryError +
-                MessageFormat.format(EDStatic.queryErrorLLT, ".odvTxt"));
+                MessageFormat.format(EDStatic.queryErrorLLT, ".SDNodvTxt"));
 
         
         int nCols = table.nColumns();
@@ -248,9 +259,10 @@ public class SeaDataNetODVFormatter {
         StringBuilder headers = new StringBuilder();
         List<Integer> keyColumns = new ArrayList<Integer>();
         final ODVAppender localCdiIdAppender = getODVMetadataAppender(table, pas, usedCols,  keyColumns, headers, 
-                "sdn_local_cdi_id", "sdn_local_cdi_id_variable", "Missing_sdn_local_cdi_id");
+                "SDN_LOCAL_CDI_ID", "SDN_LOCAL_CDI_ID_variable", "Missing_SDN_LOCAL_CDI_ID");
+        final ODVAppender lcLocalCdiIdAppender = getLowerCaseODVAppender(localCdiIdAppender);
         final ODVAppender edmoCodeAppender = getODVMetadataAppender(table, pas, usedCols, null, headers,
-                "sdn_edmo_code", "sdn_edmo_code_variable", "Missing_sdn_edmo_code");
+                "SDN_EDMO_CODE", "SDN_EDMO_variable", "Missing_SDN_EDMO_CODE");
         table.sort(keyColumns.stream().mapToInt(i -> i).toArray());
         { // ADD sdn_references. Usually only one, but could be more.
         	StringBuilder sb = new StringBuilder();
@@ -261,10 +273,10 @@ public class SeaDataNetODVFormatter {
             for (int row = 0; row < nRows; row++) {
                 sb.setLength(0);
                 sb.append("//<sdn_reference xlink:type=\"SDN:L23::CDI\" xlink:role=\"isDescribedBy\"");
-                sb.append(" xlink:href=\"http://seadatanet.maris2.nl/v_cdi_v3/print_xml.asp?edmo=");
+                sb.append(" xlink:href=\"https://cdi.seadatanet.org/report/edmo/");
                 edmoCodeAppender.append(sb, row, false);
-                sb.append("&identifier=");
-                localCdiIdAppender.append(sb, row, false);
+                sb.append("/");
+                lcLocalCdiIdAppender.append(sb, row, false);
                 if(nRows > 1) {
                 	sb.append("\" sdn:scope=\"");
                 	edmoCodeAppender.append(sb, row, false);
@@ -297,24 +309,42 @@ public class SeaDataNetODVFormatter {
             String long_name = table.columnAttributes(col).getString("long_name");
             String standard_name = table.columnAttributes(col).getString("long_name");
             localNames[col] = (long_name == null? (standard_name == null ? colName : standard_name) : long_name);
-            String sdnP01 = table.columnAttributes(col).getString("sdn_p01_urn");
-            if(sdnP01 == null) {
-            	sdnP01 = table.columnAttributes(col).getString("sdn_parameter_urn");
+            String sdnP01 = table.columnAttributes(col).getString("sdn_parameter_urn");
+            String sdnP06 = table.columnAttributes(col).getString("sdn_units_urn");
+            String sdnL22 = table.columnAttributes(col).getString("sdn_instrument_urn");
+            String sdnL33 = table.columnAttributes(col).getString("sdn_fall_rate_urn");
+            String sformat = table.columnAttributes(col).getString("sdn_odv_format");
+            String sdnOutputP01 = table.columnAttributes(col).getString("sdn_odv_parameter_urn");
+            String sdnOutputP06 = table.columnAttributes(col).getString("sdn_odv_units_urn");
+            String attrUnits = table.columnAttributes(col).getString("units");
+            isTimeStamp[col] = (col == timeCol) || EDV.TIME_UNITS.equals(attrUnits); //units may be null
+
+            if(isTimeStamp[col]) {
+            	output_format[col] = sformat == null? timeFormatMask : sformat;
+            	if(Calendar2.epochSecondsToLimitedIsoStringT(output_format[col], 1563191147868.0, "bad") == "bad"){
+                    headers.append("// WARNING: invalid sdn_odv_format ["+output_format[col]+"] for "+colName+"\r\n");
+                    output_format[col] = "YYYY-MM-DDThh:mm:ss.sss";
+            	}
+            	sdnP01 = sdnOutputP01 == null ? timeP01 : sdnOutputP01;
+            	sdnP06 = sdnOutputP06 == null ? timeP06 : sdnOutputP06;
+            }else if(sformat != null){
+                try{
+                   String.format(sformat,1.0);
+                   output_format[col] = sformat;
+                }catch(Exception e){
+                    headers.append("// WARNING: invalid sdn_odv_format ["+sformat+"] for "+colName+"\r\n");
+                }
+            	sdnP01 = sdnOutputP01 == null ? sdnP01 : sdnOutputP01;
+            	sdnP06 = sdnOutputP06 == null ? sdnP06 : sdnOutputP06;
             }
-            String sdnP06 = table.columnAttributes(col).getString("sdn_p06_urn");
-            if(sdnP06 == null) {
-            	sdnP06 = table.columnAttributes(col).getString("sdn_uom_urn");
-            }
-            String sdnL22 = table.columnAttributes(col).getString("sdn_l22_urn");
-            String sdnL33 = table.columnAttributes(col).getString("sdn_l33_urn");
             sb.append("//<subject>SDN:LOCAL:");
             sb.append(localNames[col]);
             sb.append("</subject>");
             sb.append("<object>");
-            sb.append(sdnP01 == null? "Missing sdn_p01_urn attribute": (sdnP01));
+            sb.append(sdnP01 == null? "Missing sdn_instrument_urn attribute": (sdnP01));
             sb.append("</object>");
             sb.append("<units>");
-            sb.append(sdnP06 == null? "Missing sdn_p06_urn attribute" : (sdnP06));
+            sb.append(sdnP06 == null? "Missing sdn_fall_rate_urn attribute" : (sdnP06));
             sb.append("</units>");
             if(sdnL22 != null)
                 sb.append("<instrument>").append(sdnL22).append("</instrument>");
@@ -324,8 +354,6 @@ public class SeaDataNetODVFormatter {
             colHeaderMap.put(col,sb.toString());
             labels[col] = table.columnAttributes(col).getString("sdn_label");
             
-            String attrUnits = table.columnAttributes(col).getString("units");
-            isTimeStamp[col] = (col == timeCol) || EDV.TIME_UNITS.equals(attrUnits); //units may be null
             if (attrUnits == null || attrUnits.length() == 0) {
                 attrUnits = "";
             } else {
@@ -337,21 +365,6 @@ public class SeaDataNetODVFormatter {
             }
             units[col] = attrUnits;
             
-            String sformat = table.columnAttributes(col).getString("sdn_output_format");
-            if(isTimeStamp[col]) {
-            	output_format[col] = sformat == null? timeFormatMask : sformat;
-            	if(Calendar2.epochSecondsToLimitedIsoStringT(output_format[col], 1563191147868.0, "bad") == "bad"){
-                    headers.append("// WARNING: invalid sdn_output_format ["+output_format[col]+"] for "+colName+"\r\n");
-                    output_format[col] = "YYYY-MM-DDThh:mm:ss.sss";
-            	}
-            }else if(sformat != null){
-                try{
-                   String.format(sformat,1.0);
-                   output_format[col] = sformat;
-                }catch(Exception e){
-                    headers.append("// WARNING: invalid sdn_output_format ["+sformat+"] for "+colName+"\r\n");
-                }
-            }
 
             if(sdnP01 == null || sdnP06 == null) {
             	missingConfigs.add(col);
@@ -381,9 +394,9 @@ public class SeaDataNetODVFormatter {
 
         //START OF METADATA SECTION
         //final int usedCol[] = {-1};
-        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "sdn_cruise", "sdn_cruise_variable", "Missing sdn_cruise" ,"cruise"));
+        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "SDN_CRUISE", "SDN_CRUISE_variable", "Missing SDN_CRUISE" ,"cruise"));
         appenders.add(tab);
-        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "sdn_station_id", "sdn_station_id_variable", "Missing sdn_station_id" , "station_id", "station"));
+        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "SDN_STATION", "SDN_STATION_variable", "Missing SDN_STATION" , "station_id", "station"));
         appenders.add(tab);
         // According to Rob Thomas, types other than * are only for backward compatibility.
         appenders.add((sb,i,b) -> sb.append("*\t")); // Type
@@ -405,7 +418,7 @@ public class SeaDataNetODVFormatter {
         appenders.add(tab);
 		appenders.add(edmoCodeAppender);
         appenders.add(tab);
-        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "sdn_bot_depth", "sdn_bot_depth_variable", "Missing sdn_bot_depth"));
+        appenders.add(getODVMetadataAppender(table, pas, usedCols, null, headers, "SDN_BOT_DEPTH", "SDN_BOT_DEPTH_variable", "Missing SDN_BOT_DEPTH"));
 
 
         usedCols.add(latCol);
@@ -450,13 +463,13 @@ public class SeaDataNetODVFormatter {
 
         
         List<Integer> dataCols = new ArrayList<Integer>();
-        String primaryVar =  table.globalAttributes().getString("sdn_primary_variable");
+        String primaryVar =  table.globalAttributes().getString("SDN_primary_variable");
         if(primaryVar == null){
         	// Is it a TimeSeries? If yes, then time is the primary variable.
         	if(table.globalAttributes().getString("featureType") == "TimeSeries" || table.globalAttributes().getString("cdm_data_type") == "TimeSeries") {
         		primaryVar = table.getColumnName(timeCol);
         	}else {
-        		headers.append("// warning: global attribute sdn_primary_variable is not defined\r\n");
+        		headers.append("// warning: global attribute SDN_primary_variable is not defined\r\n");
         	}
         }
 
@@ -468,7 +481,7 @@ public class SeaDataNetODVFormatter {
 
         if(primaryVarCol < 0){
             if(primaryVar != null)
-                headers.append("// warning:  sdn_primary_variable "+primaryVar+" not in query\r\n");
+                headers.append("// warning:  SDN_primary_variable "+primaryVar+" not in query\r\n");
         }else{
            dataCols.add(primaryVarCol);
            usedCols.add(primaryVarCol);
