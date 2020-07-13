@@ -113,7 +113,7 @@ public class SeaDataNetODVFormatter {
         else if (pa instanceof StringArray) type = "TEXT:" +
             Math.min(255, ((StringArray)pa).maxStringLength() + 1);
         else throw new SimpleException(EDStatic.errorInternal +
-            "Unexpected data type=" + pa.elementClassString() +
+            "Unexpected data type=String" +
             " for column=" + colName + ".");
         return type;
     }
@@ -290,9 +290,9 @@ public class SeaDataNetODVFormatter {
 	            }
 	        }
             // license
-            if(table.globalAttributes().getString("licenseUrl") != null) {
+            if(table.globalAttributes().getString("license_url") != null) {
             	headers.append("//<sdn_reference xlink:type=\"SDN:L23::DTLCNC\" xlink:role=\"isDescribedBy\" xlink:href=\"");
-            	headers.append(table.globalAttributes().getString("licenseUrl"));
+            	headers.append(table.globalAttributes().getString("license_url"));
             	headers.append("\"/>\r\n");
             }
             headers.append(tmpHeaders);
